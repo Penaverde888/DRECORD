@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DRecord</title>
+<style>
+:root{--bg:#e9ecf1;--panel:#f8f9fb;--ink:#161b26;--mute:#5d6678;--line:#cfd5e0;--blue:#2447d6;--rec:#d92b3a;--ok:#16895a;--warn:#b7791f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f131b;--panel:#171c27;--ink:#e8ecf4;--mute:#97a1b5;--line:#2a3243;--blue:#7b97ff;--rec:#ff5b69;--ok:#42c58b;--warn:#e3a94b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f131b;--panel:#171c27;--ink:#e8ecf4;--mute:#97a1b5;--line:#2a3243;--blue:#7b97ff;--rec:#ff5b69;--ok:#42c58b;--warn:#e3a94b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.logo{font:800 24px/1 "Trebuchet MS","Segoe UI",sans-serif;letter-spacing:-.5px}
+.logo i{font-style:normal;color:var(--rec)}
+.now{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--mute);font-size:14px}
+.badge{padding:3px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--line);font-size:13px;color:var(--ink)}
+.badge.live{background:var(--rec);color:#fff;border-color:var(--rec)}
+main{display:grid;grid-template-columns:280px minmax(0,1fr) 300px;gap:16px;padding:16px 22px;max-width:1500px;margin:auto}
+@media (max-width:1080px){main{grid-template-columns:1fr 1fr}.mid{grid-column:1/-1;order:-1}}
+@media (max-width:640px){main{grid-template-columns:1fr;padding:12px}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+h2{font-size:16px;margin:0 0 12px;font-weight:700}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 14px}
+button:hover{border-color:var(--blue)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.tasks ul{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}
+.task{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.task.active{border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
+.task.done span.t{text-decoration:line-through;color:var(--mute)}
+.task span.t{flex:1;min-width:0;overflow-wrap:anywhere}
+.task small{color:var(--mute);font-variant-numeric:tabular-nums}
+.task button{padding:2px 8px}
+.chans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.chans{grid-template-columns:1fr}}
+.ch{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;background:var(--bg)}
+.ch h3{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.ch p{margin:0;color:var(--mute);font-size:13px}
+.rec{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;padding:11px}
+.rec.on{background:var(--rec);border-color:var(--rec)}
+.meter{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.meter b{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
+.vol{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13px;color:var(--mute)}
+.vol input{width:100%;accent-color:var(--blue)}
+.timer{font:600 20px/1 ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.recs{margin-top:16px}
+.item{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;display:grid;gap:8px}
+.item .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item .row b{flex:1}
+video,audio{width:100%;max-height:220px;border-radius:6px}
+.stat{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.stat:last-child{border:0}
+.stat span:first-child{color:var(--mute)}
+.stat span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:2px 0 8px}
+.bar b{display:block;height:100%;background:var(--blue);width:0;transition:width .3s}
+.devs{font-size:13px;color:var(--mute);margin:6px 0 0;padding-left:18px}
+.note{font-size:13px;color:var(--mute);margin:10px 0 0}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;max-width:90vw;z-index:5}
+select,textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);max-width:100%}
+textarea{flex:1;min-width:200px;resize:vertical}
+.caprow{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.caprow input[type=text]{flex:1;min-width:140px;width:auto}
+.feed{max-height:300px;overflow:auto;display:grid;gap:6px}
+.e{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:3px}
+.e .h{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mute)}
+.e .h span:first-child{background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:0 8px;color:var(--ink)}
+.e .h button{margin-left:auto;padding:0 8px}
+.e p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sf{display:grid;gap:6px}
+.dayh{font-weight:700;font-size:13px;padding:6px 2px 0;color:var(--blue)}
+.lv{color:var(--mute);font-size:12px;font-variant-numeric:tabular-nums}
+.due{box-shadow:inset 3px 0 0 var(--rec)!important;border-color:var(--rec)!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">D<i>Record</i></div>
+  <span class="badge" id="status">Idle</span>
+  <div class="now"><span id="active">No active task</span><span id="clock"></span><button id="theme" aria-label="Toggle theme">Theme</button></div>
+</header>
+
+<main>
+  <section class="tasks" aria-label="Tasks">
+    <h2>Tasks</h2>
+    <form id="tf" onsubmit="return false"><input type="text" id="ti" placeholder="Add a task and press Enter" aria-label="New task"></form>
+    <ul id="tl"></ul>
+    <p class="note">Select a task to make it active. Its timer runs while it is active, and new entries and recordings are tagged with it.</p>
+    <h2 style="margin-top:20px">Scheduler</h2>
+    <div class="sf"><input type="text" id="st" placeholder="What is scheduled?" aria-label="Schedule title"><input type="datetime-local" id="sd" aria-label="Date and time" style="padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit"><select id="sr" aria-label="Repeat"><option value="once">Once</option><option value="daily">Every day</option><option value="weekdays">Weekdays</option></select><select id="sa" aria-label="When it is due"><option value="remind">Remind me</option><option value="mic">Prompt to record microphone</option><option value="speaker">Prompt to record speaker</option></select><button class="rec" id="sb">Add to schedule</button></div>
+    <ul id="sl" style="list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px"></ul>
+    <p class="note">Keep this tab open. Browsers need your click to start capture, so recording items show a Start button when due.</p>
+  </section>
+
+  <section class="mid" aria-label="Recorder">
+    <h2>Capture</h2>
+    <div class="caprow"><select id="ct" aria-label="Entry type"><option>Note</option><option>Idea</option><option>Log</option><option>Task</option></select><textarea id="cx" rows="2" aria-label="Entry text" placeholder="Type anything: a note, an idea, what you just did. Ctrl+Enter to save."></textarea><small class="note" style="margin:0;align-self:center">When (optional)</small><input type="datetime-local" id="cw" aria-label="When it happened, leave empty for now" style="padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit"><button class="rec" id="cs">Save entry</button></div>
+    <div class="caprow"><input type="text" id="cq" placeholder="Search entries" aria-label="Search entries"><select id="cf" aria-label="Filter"><option value="">All types</option><option>Note</option><option>Idea</option><option>Log</option><option>Task</option></select><button id="ce">Export</button></div>
+    <div class="feed" id="cl"></div>
+    <h2 style="margin-top:20px">Recorder</h2>
+    <div class="chans">
+      
+      <div class="ch" id="c-mic">
+        <h3>Microphone <span class="timer" data-t>00:00</span></h3>
+        <small class="lv" data-lv>Level: not recording</small><p>Your voice from the selected input.</p>
+        <button class="rec" data-k="mic">Record microphone</button>
+        <div class="meter"><b></b></div>
+        <label class="vol"><span>Volume</span><input type="range" min="0" max="200" value="100" data-g><span data-v>100%</span></label>
+      </div>
+      <div class="ch" id="c-speaker">
+        <h3>Speaker <span class="timer" data-t>00:00</span></h3>
+        <small class="lv" data-lv>Level: not recording</small><p>System audio. Tick “Share audio” in the picker.</p>
+        <button class="rec" data-k="speaker">Record speaker</button>
+        <div class="meter"><b></b></div>
+        <label class="vol"><span>Volume</span><input type="range" min="0" max="200" value="100" data-g><span data-v>100%</span></label>
+      </div>
+    </div>
+    <p class="note">Each channel records on its own, so you can run any combination. Volume sliders set the recording level and apply live.</p>
+    <div class="recs"><h2>Recordings</h2><div id="rl"><p class="note">Nothing recorded yet.</p></div></div>
+  </section>
+
+  <section aria-label="Device monitor">
+    <h2>This device</h2>
+    <div id="mon"></div>
+    <h2 style="margin-top:16px">Connected media</h2>
+    <button id="scan">Scan devices</button>
+    <ul class="devs" id="devs"><li>Not scanned yet</li></ul>
+    <p class="note">A web page can only see its own device. Values the browser hides show as “Unavailable”.</p>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), pad=n=>String(n).padStart(2,'0');
+const fmt=s=>pad(Math.floor(s/60))+':'+pad(Math.floor(s%60));
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)}
+$('#theme').onclick=()=>{const r=document.documentElement;const dark=getComputedStyle(r).colorScheme==='dark';r.dataset.theme=dark?'light':'dark'};
+setInterval(()=>$('#clock').textContent=new Date().toLocaleTimeString(),1000);
+
+/* ---------- tasks ---------- */
+let tasks=[],activeId=null;
+function save(){try{localStorage.setItem('drecord',JSON.stringify(tasks))}catch(e){}}
+try{tasks=JSON.parse(localStorage.getItem('drecord')||'[]')}catch(e){tasks=[]}
+function renderTasks(){
+  const ul=$('#tl');ul.innerHTML='';
+  if(!tasks.length){ul.innerHTML='<li class="note">No tasks yet. Add your first one above.</li>'}
+  tasks.forEach(t=>{
+    const li=document.createElement('li');li.className='task'+(t.id===activeId?' active':'')+(t.done?' done':'');
+    li.innerHTML='<input type="checkbox" aria-label="Done"'+(t.done?' checked':'')+'><span class="t"></span><small>'+fmt(t.secs)+'</small><button aria-label="Delete task">×</button>';
+    $('.t',li).textContent=t.name;
+    li.onclick=()=>{activeId=t.id;renderTasks();updActive()};
+    $('input',li).onclick=e=>{e.stopPropagation();t.done=e.target.checked;save();renderTasks();if(t.done)addEntry('Log','Completed task: '+t.name+' ('+fmt(t.secs)+' tracked)')};
+    $('button',li).onclick=e=>{e.stopPropagation();tasks=tasks.filter(x=>x!==t);if(activeId===t.id)activeId=null;save();renderTasks();updActive()};
+    ul.appendChild(li);
+  });
+}
+function updActive(){const t=tasks.find(x=>x.id===activeId);$('#active').textContent=t?'Active: '+t.name:'No active task'}
+$('#ti').onkeydown=e=>{if(e.key==='Enter'&&e.target.value.trim()){const t={id:Date.now(),name:e.target.value.trim(),secs:0,done:false};tasks.unshift(t);activeId=t.id;e.target.value='';save();renderTasks();updActive();addEntry('Task',t.name)}};
+setInterval(()=>{const t=tasks.find(x=>x.id===activeId);if(t&&!t.done){t.secs++;save();const s=$('.task.active small');if(s)s.textContent=fmt(t.secs)}},1000);
+renderTasks();
+
+/* ---------- recorder ---------- */
+const chans={};let actx=null,count=0;
+function live(){const n=Object.keys(chans).length;$('#status').textContent=n?'Recording '+n+(n>1?' channels':' channel'):'Idle';$('#status').classList.toggle('live',!!n)}
+async function start(k){
+  const card=$('#c-'+k),btn=$('.rec',card);
+  try{
+    let stream,video=false;
+    if(k==='mic'){stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+    else if(k==='speaker'){
+      const d=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+      if(!d.getAudioTracks().length){d.getTracks().forEach(t=>t.stop());toast('No audio shared. Choose a tab or screen and tick “Share audio”.');return}
+      d.getVideoTracks().forEach(t=>t.stop());stream=new MediaStream(d.getAudioTracks());
+    }
+    const c={k,stream,video,chunks:[],t0:Date.now()};
+    let rec;
+    if(!video){
+      actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      const src=actx.createMediaStreamSource(stream),gain=actx.createGain(),an=actx.createAnalyser(),dest=actx.createMediaStreamDestination();
+      an.fftSize=256;gain.gain.value=$('[data-g]',card).value/100;
+      src.connect(gain);gain.connect(an);gain.connect(dest);
+      c.gain=gain;c.an=an;rec=new MediaRecorder(dest.stream);
+      const buf=new Uint8Array(an.frequencyBinCount);
+      c.sum=0;c.n=0;c.pk=0;c.m=setInterval(()=>{an.getByteTimeDomainData(buf);let p=0,sq=0;buf.forEach(v=>{const a=Math.abs(v-128)/128;p=Math.max(p,a);sq+=a*a});const rms=Math.sqrt(sq/buf.length);c.sum+=rms;c.n++;c.pk=Math.max(c.pk,p);$('.meter b',card).style.width=Math.min(100,p*100)+'%';$('[data-lv]',card).textContent='Level now: '+Math.round(rms*100)+'% · '+db(rms)+' dB · average '+db(c.sum/c.n)+' dB'},100);
+    } else rec=new MediaRecorder(stream);
+    c.rec=rec;rec.ondataavailable=e=>e.data.size&&c.chunks.push(e.data);
+    rec.onstop=()=>finish(c);
+    stream.getTracks().forEach(t=>t.onended=()=>stop(k));
+    rec.start(1000);chans[k]=c;
+    btn.textContent='Stop '+(k==='mic'?'microphone':k);btn.classList.add('on');
+    c.tm=setInterval(()=>$('[data-t]',card).textContent=fmt((Date.now()-c.t0)/1000),500);
+    live();
+  }catch(e){toast(k==='screen'||k==='speaker'?'Capture was cancelled or is blocked in this view. Try opening the page in its own tab.':'Microphone is blocked. Allow access in your browser.')}
+}
+function stop(k){const c=chans[k];if(!c)return;delete chans[k];clearInterval(c.tm);clearInterval(c.m);
+  const card=$('#c-'+k),btn=$('.rec',card);btn.textContent='Record '+(k==='mic'?'microphone':k);btn.classList.remove('on');
+  $('.meter b',card).style.width='0';$('[data-lv]',card).textContent='Level: not recording';$('[data-t]',card).textContent='00:00';
+  if(c.rec.state!=='inactive')c.rec.stop();c.stream.getTracks().forEach(t=>t.stop());live()}
+function finish(c){
+  const type=c.video?'video/webm':'audio/webm',blob=new Blob(c.chunks,{type}),url=URL.createObjectURL(blob);
+  const t=tasks.find(x=>x.id===activeId),name=(t?t.name:'Untitled')+' – '+({screen:'Screen',mic:'Microphone',speaker:'Speaker'})[c.k];
+  const d=document.createElement('div');d.className='item';
+  d.innerHTML='<div class="row"><b></b><small>'+fmt((Date.now()-c.t0)/1000)+' · '+(blob.size/1048576).toFixed(1)+' MB</small><button data-d>Download</button><button data-x>Remove</button></div>'+(c.video?'<video controls src="'+url+'"></video>':'<audio controls src="'+url+'"></audio>');
+  const end=Date.now(),avg=c.n?c.sum/c.n:0,adb=avg>0.0005?20*Math.log10(avg):-99,lvl=adb>-12?'Loud':adb>-30?'Normal':'Quiet',vs=$('#c-'+c.k+' [data-g]').value;
+  const info=dt(c.t0)+' to '+new Date(end).toLocaleTimeString()+' · '+fmt((end-c.t0)/1000)+' · volume setting '+vs+'% · average '+db(avg)+' dB ('+lvl+') · peak '+db(c.pk)+' dB';
+  const sm=document.createElement('small');sm.className='note';sm.style.margin='0';sm.textContent=info;d.insertBefore(sm,d.children[1]);
+  $('b',d).textContent=name;$('[data-d]',d).onclick=()=>dl((++count)+'-'+c.k+'.webm',blob);$('[data-x]',d).onclick=()=>{URL.revokeObjectURL(url);d.remove()};
+  const l=$('#rl');if(l.querySelector('p'))l.innerHTML='';l.prepend(d);toast('Saved: '+name);addEntry('Log','Recorded '+name+' · '+info);
+}
+document.querySelectorAll('.rec').forEach(b=>b.onclick=()=>chans[b.dataset.k]?stop(b.dataset.k):start(b.dataset.k));
+document.querySelectorAll('[data-g]').forEach(r=>r.oninput=()=>{const card=r.closest('.ch'),k=card.id.slice(2);$('[data-v]',card).textContent=r.value+'%';if(chans[k])chans[k].gain.gain.value=r.value/100});
+
+/* ---------- device monitor ---------- */
+const mon={fps:0,lag:0,batt:null};
+let frames=0,last=performance.now();
+(function loop(){frames++;requestAnimationFrame(loop)})();
+setInterval(()=>{const n=performance.now();mon.fps=Math.round(frames*1000/(n-last));frames=0;last=n},1000);
+let lt=performance.now();setInterval(()=>{const n=performance.now();mon.lag=Math.max(0,Math.round(n-lt-500));lt=n},500);
+if(navigator.getBattery)navigator.getBattery().then(b=>{mon.batt=b});
+const NA='Unavailable';
+async function drawMon(){
+  const c=navigator.connection||{},p=performance.memory;let st=null;
+  try{st=await navigator.storage.estimate()}catch(e){}
+  const rows=[['Status',navigator.onLine?'Online':'Offline'],
+   ['Network',c.effectiveType?c.effectiveType.toUpperCase()+(c.downlink?' · '+c.downlink+' Mbps':''):NA],
+   ['CPU cores',navigator.hardwareConcurrency||NA],
+   ['Device memory',navigator.deviceMemory?'≥ '+navigator.deviceMemory+' GB':NA],
+   ['Screen',screen.width+'×'+screen.height+' @'+(window.devicePixelRatio||1)+'x'],
+   ['Platform',(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||NA],
+   ['Frame rate',mon.fps+' fps'],['Main-thread lag',mon.lag+' ms']];
+  let h=rows.map(r=>'<div class="stat"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>').join('');
+  const bar=(l,v,txt)=>'<div class="stat"><span>'+l+'</span><span>'+txt+'</span></div><div class="bar"><b style="width:'+v+'%"></b></div>';
+  h+=mon.batt?bar('Battery',Math.round(mon.batt.level*100),Math.round(mon.batt.level*100)+'%'+(mon.batt.charging?' · charging':'')):'<div class="stat"><span>Battery</span><span>'+NA+'</span></div>';
+  if(p)h+=bar('JS memory',Math.round(p.usedJSHeapSize/p.jsHeapSizeLimit*100),(p.usedJSHeapSize/1048576).toFixed(0)+' MB');
+  if(st&&st.quota)h+=bar('Browser storage',Math.min(100,st.usage/st.quota*100),(st.usage/1048576).toFixed(0)+' MB used');
+  $('#mon').innerHTML=h;
+}
+drawMon();setInterval(drawMon,2000);
+$('#scan').onclick=async()=>{
+  try{
+    const ds=await navigator.mediaDevices.enumerateDevices();
+    const g={audioinput:'Microphone',audiooutput:'Speaker',videoinput:'Camera'};
+    $('#devs').innerHTML=ds.map(d=>'<li>'+g[d.kind]+': '+(d.label||'name hidden until mic access is allowed').replace(/[<>&]/g,'')+'</li>').join('')||'<li>No devices found</li>';
+  }catch(e){toast('Cannot list devices here.')}
+};
+/* ---------- capture ---------- */
+let notes=[],sched=[];
+try{notes=JSON.parse(localStorage.getItem('drecord-notes')||'[]')}catch(e){}
+try{sched=JSON.parse(localStorage.getItem('drecord-sched')||'[]')}catch(e){}
+function sv(){try{localStorage.setItem('drecord-notes',JSON.stringify(notes));localStorage.setItem('drecord-sched',JSON.stringify(sched))}catch(e){}}
+async function dl(name,data){
+  try{const d=window.claude&&claude.use?await claude.use('downloads'):null;if(d){await d.save({filename:name,data});return}}catch(e){if(e&&e.code==='declined')return}
+  const u=URL.createObjectURL(data),a=document.createElement('a');a.href=u;a.download=name;a.click();
+}
+function db(x){return x>0.0005?Math.round(20*Math.log10(x)):'-∞'}
+function dt(ts){return new Date(ts).toLocaleString([],{weekday:'long',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'})}
+function addEntry(type,text,ts){const t=tasks.find(x=>x.id===activeId);notes.unshift({id:Date.now()+Math.random(),ts:ts||Date.now(),type,text,task:t?t.name:''});notes.sort((a,b)=>b.ts-a.ts);sv();renderNotes()}
+function renderNotes(){
+  const q=$('#cq').value.toLowerCase(),f=$('#cf').value,box=$('#cl');box.innerHTML='';
+  const list=notes.filter(n=>(!f||n.type===f)&&(!q||(n.text+n.task).toLowerCase().includes(q)));
+  if(!list.length){box.innerHTML='<p class="note">'+(notes.length?'No entries match.':'Nothing captured yet. Type above and save.')+'</p>';return}
+  let ld='';list.slice(0,200).forEach(n=>{const dk=new Date(n.ts).toDateString();if(dk!==ld){ld=dk;const h=document.createElement('div');h.className='dayh';h.textContent=new Date(n.ts).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});box.appendChild(h)}const e=document.createElement('div');e.className='e';
+    e.innerHTML='<div class="h"><span></span><span></span><button aria-label="Delete entry">×</button></div><p></p>';
+    const s=e.querySelectorAll('.h span');s[0].textContent=n.type;s[1].textContent=new Date(n.ts).toLocaleTimeString()+(n.task?' · '+n.task:'');
+    $('p',e).textContent=n.text;$('button',e).onclick=()=>{notes=notes.filter(x=>x!==n);sv();renderNotes()};box.appendChild(e)});
+}
+function saveEntry(){const x=$('#cx'),v=x.value.trim();if(!v)return;const ty=$('#ct').value;
+  if(ty==='Task'){const t={id:Date.now(),name:v,secs:0,done:false};tasks.unshift(t);activeId=t.id;save();renderTasks();updActive()}
+  const w=$('#cw').value?new Date($('#cw').value).getTime():0;addEntry(ty,v,w||undefined);x.value='';$('#cw').value=''}
+$('#cs').onclick=saveEntry;
+$('#cx').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();saveEntry()}};
+$('#cq').oninput=renderNotes;$('#cf').onchange=renderNotes;
+$('#ce').onclick=()=>{if(!notes.length){toast('Nothing to export yet.');return}
+  const txt=notes.slice().reverse().map(n=>'['+dt(n.ts)+'] '+n.type.toUpperCase()+(n.task?' ('+n.task+')':'')+': '+n.text).join('\n');
+  dl('drecord-entries.txt',new Blob([txt],{type:'text/plain'}))};
+renderNotes();
+
+/* ---------- scheduler ---------- */
+const lab={remind:'Reminder',mic:'Record microphone',speaker:'Record speaker'};
+function localISO(ms){return new Date(ms-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)}
+$('#sd').value=localISO(Date.now()+600000);
+function nextAt(s){let a=s.at;if(s.rep==='daily')a+=864e5;else if(s.rep==='weekdays'){do{a+=864e5}while([0,6].includes(new Date(a).getDay()))}else return null;while(a<=Date.now())a+=864e5;return a}
+function renderSched(){
+  const ul=$('#sl');ul.innerHTML='';sched.sort((a,b)=>a.at-b.at);
+  if(!sched.length){ul.innerHTML='<li class="note">Nothing scheduled. Add a time above.</li>';return}
+  sched.forEach(s=>{const li=document.createElement('li');li.className='task'+(s.due?' due':'');
+    li.innerHTML='<span class="t"></span><small></small>'+(s.due&&s.act!=='remind'?'<button data-s>Start</button>':'')+'<button data-o>'+(s.due?'Done':'×')+'</button>';
+    $('.t',li).textContent=s.title;$('small',li).textContent=(s.due?'Due now · ':'')+new Date(s.at).toLocaleString([],{dateStyle:'short',timeStyle:'short'})+' · '+lab[s.act]+(s.rep!=='once'?' · '+(s.rep==='daily'?'daily':'weekdays'):'');
+    $('small',li).style.fontSize='12px';
+    const st=$('[data-s]',li);if(st)st.onclick=()=>{start(s.act)};
+    $('[data-o]',li).onclick=()=>{const n=s.due?nextAt(s):null;if(n){s.at=n;s.due=false}else sched=sched.filter(x=>x!==s);sv();renderSched()};
+    ul.appendChild(li)});
+}
+$('#sb').onclick=()=>{const t=$('#st').value.trim(),at=new Date($('#sd').value).getTime();
+  if(!t){toast('Give the schedule a title.');return}if(!at||isNaN(at)){toast('Pick a date and time.');return}
+  try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
+  sched.push({id:Date.now(),title:t,at,rep:$('#sr').value,act:$('#sa').value,due:false});sv();$('#st').value='';$('#sd').value=localISO(Math.max(at,Date.now())+600000);renderSched();toast('Scheduled.')};
+function check(){let ch=false;sched.forEach(s=>{if(!s.due&&s.at<=Date.now()){s.due=true;ch=true;toast('Due: '+s.title);addEntry('Log','Scheduled item due: '+s.title);
+  try{if('Notification' in window&&Notification.permission==='granted')new Notification('DRecord',{body:s.title})}catch(e){}}});
+  if(ch){sv();renderSched()}}
+renderSched();check();setInterval(check,10000);
+</script>
+</body>
+</html>
